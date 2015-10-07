@@ -1,6 +1,5 @@
 #!/bin/bash
 # Script for packaging all the job server files to .tar.gz for Mesos or other single-image deploys
-WORK_DIR=/tmp/job-server
 
 ENV=$1
 if [ -z "$ENV" ]; then
@@ -51,14 +50,25 @@ FILES="job-server-extras/target/scala-$majorVersion/spark-job-server.jar
        config/shiro.ini
        config/log4j-server.properties"
 
-rm -rf $WORK_DIR
-mkdir -p $WORK_DIR
-cp $FILES $WORK_DIR/
-cp $configFile $WORK_DIR/settings.sh
-pushd $WORK_DIR
-TAR_FILE=$WORK_DIR/job-server.tar.gz
-rm -f $TAR_FILE
-tar zcvf $TAR_FILE *
+
+
+WORK_DIR=$(mktemp -d)
+FILEDIR="$WORK_DIR/job-server-${ENV}"
+TAR_FILE="job-server-${ENV}.tar.gz"
+
+function finish {
+    rm -Rf "${WORK_DIR}"
+}
+trap finish EXIT
+
+mkdir -p "$FILEDIR"
+cp $FILES "$FILEDIR"/
+cp $configFile "$FILEDIR"/settings.sh
+
+pushd "$WORK_DIR"
+tar zcvf $TAR_FILE "job-server-${ENV}/"
 popd
+
+mv "$WORK_DIR/$TAR_FILE" .
 
 echo "Created distribution at $TAR_FILE"
