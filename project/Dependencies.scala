@@ -10,11 +10,8 @@ object Dependencies {
   val excludeQQ = ExclusionRule(organization = "org.scalamacros")
   val jdkVersion = scala.util.Properties.isJavaAtLeast("1.8")
 
-  lazy val typeSafeConfigDeps = if(jdkVersion){
-    "com.typesafe" % "config" % "1.3.0"
-  } else {
-    "com.typesafe" % "config" % "1.2.1"
-  }
+  lazy val typeSafeConfigDeps = "com.typesafe" % "config" % "1.2.1"
+  
   lazy val yammerDeps = "com.yammer.metrics" % "metrics-core" % "2.2.0"
 
   lazy val jodaDeps = Seq(
@@ -25,8 +22,8 @@ object Dependencies {
   lazy val akkaDeps = Seq(
     // Akka is provided because Spark already includes it, and Spark's version is shaded so it's not safe
     // to use this one
-    "com.typesafe.akka" %% "akka-slf4j" % "2.3.15" % "provided",
-    "com.typesafe.akka" %% "akka-cluster" % "2.3.15" exclude("com.typesafe.akka", "akka-remote"),
+    "com.typesafe.akka" %% "akka-slf4j" % "2.3.4" % "provided",
+    "com.typesafe.akka" %% "akka-cluster" % "2.3.4" exclude("com.typesafe.akka", "akka-remote"),
     "io.spray" %% "spray-json" % "1.3.2",
     "io.spray" %% "spray-can" % "1.3.3",
     "io.spray" %% "spray-caching" % "1.3.3",
@@ -39,11 +36,12 @@ object Dependencies {
 
   val mesosVersion = sys.env.getOrElse("MESOS_VERSION", "0.28.1-2.0.20.ubuntu1404")
 
-  val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "1.6.1")
+  val sparkVersion = sys.env.getOrElse("SPARK_VERSION", "1.2.1")
   lazy val sparkDeps = Seq(
     "org.apache.spark" %% "spark-core" % sparkVersion % "provided" excludeAll(excludeNettyIo, excludeQQ),
     // Force netty version.  This avoids some Spark netty dependency problem.
-    "io.netty" % "netty-all" % "4.0.29.Final"
+    "io.netty" % "netty-all" % "4.0.29.Final",
+    "com.typesafe.akka" %% "akka-cluster" % "2.3.4" exclude("com.typesafe.akka", "akka-remote")
   )
 
   lazy val sparkExtraDeps = Seq(
@@ -66,7 +64,7 @@ object Dependencies {
 
   lazy val coreTestDeps = Seq(
     "org.scalatest" %% "scalatest" % "2.2.6" % "test",
-    "com.typesafe.akka" %% "akka-testkit" % "2.3.15" % "test",
+    "com.typesafe.akka" %% "akka-testkit" % "2.3.4" % "test",
     "io.spray" %% "spray-testkit" % "1.3.3" % "test"
   )
 

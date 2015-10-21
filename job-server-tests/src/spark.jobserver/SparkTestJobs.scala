@@ -38,14 +38,14 @@ class CacheSomethingJob extends SparkTestJob {
                .map(_ * 2)
     dd.setName("numbers")
     dd.cache()
-    dd.sum.toInt
+    dd.reduce( _ + _ ).toInt
   }
 }
 
 class AccessCacheJob extends SparkTestJob {
   def runJob(sc: SparkContext, config: Config): Any = {
     val rdd = sc.getPersistentRDDs.values.head.asInstanceOf[RDD[Int]]
-    rdd.sum.toInt
+    rdd.reduce( _ + _ ).toInt
   }
 }
 

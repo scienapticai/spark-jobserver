@@ -15,15 +15,15 @@ get_abs_script_path
 
 # Override logging options to provide per-context logging
 LOGGING_OPTS="-Dlog4j.configuration=file:$appdir/log4j-server.properties
-              -DLOG_DIR=$1"
+ -DLOG_DIR=$1"
 
 GC_OPTS="-XX:+UseConcMarkSweepGC
-         -verbose:gc -XX:+PrintGCTimeStamps -Xloggc:$appdir/gc.out
-         -XX:MaxPermSize=512m
-         -XX:+CMSClassUnloadingEnabled "
+ -verbose:gc -XX:+PrintGCTimeStamps -Xloggc:$appdir/gc.out
+ -XX:MaxPermSize=512m
+ -XX:+CMSClassUnloadingEnabled "
 
 JAVA_OPTS="-XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY
-           -XX:+HeapDumpOnOutOfMemoryError -Djava.net.preferIPv4Stack=true"
+ -XX:+HeapDumpOnOutOfMemoryError -Djava.net.preferIPv4Stack=true"
 
 MAIN="spark.jobserver.JobManager"
 
