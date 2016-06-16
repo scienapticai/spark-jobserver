@@ -44,11 +44,12 @@ if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE"); then
 fi
 
 cmd='$SPARK_HOME/bin/spark-submit --class $MAIN --driver-memory $JOBSERVER_MEMORY
-  --conf "spark.executor.extraJavaOptions=$LOGGING_OPTS"
-  --driver-java-options "$GC_OPTS $JAVA_OPTS $LOGGING_OPTS $CONFIG_OVERRIDES"
-  $@ $appdir/spark-job-server.jar $conffile'
+ --conf "spark.executor.extraJavaOptions=$LOGGING_OPTS"
+ --driver-class-path "$SPARK_HOME/../hive/lib/*"
+ --driver-java-options "$GC_OPTS $JAVA_OPTS $LOGGING_OPTS $CONFIG_OVERRIDES -Dspark.executor.extraClassPath=$SPARK_HOME/../hive/lib/*"
+ $@ $appdir/spark-job-server.jar $conffile'
 if [ -z "$JOBSERVER_FG" ]; then
-  eval $cmd > /dev/null 2>&1 < /dev/null &
+  eval $cmd >$LOG_DIR/spark-job-server.out 2>&1 < /dev/null &
   echo $! > $PIDFILE
 else
   eval $cmd

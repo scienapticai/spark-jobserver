@@ -45,24 +45,24 @@ class JobDAOActor(dao:JobDAO) extends InstrumentedActor {
       dao.saveJar(appName, uploadTime, jarBytes)
 
     case GetApps =>
-      sender() ! Apps(dao.getApps)
+      sender ! Apps(dao.getApps)
 
     case GetJarPath(appName, uploadTime) =>
-      sender() ! JarPath(dao.retrieveJarFile(appName,uploadTime))
+      sender ! JarPath(dao.retrieveJarFile(appName,uploadTime))
 
     case SaveJobInfo(jobInfo) =>
       dao.saveJobInfo(jobInfo)
 
     case GetJobInfos(limit) =>
-      sender() ! JobInfos(dao.getJobInfos(limit))
+      sender ! JobInfos(dao.getJobInfos(limit))
 
     case SaveJobConfig(jobId, jobConfig) =>
       dao.saveJobConfig(jobId,jobConfig)
 
     case GetJobConfigs =>
-      sender() ! JobConfigs(dao.getJobConfigs)
+      sender ! JobConfigs(dao.getJobConfigs)
 
     case GetLastUploadTime(appName) =>
-      sender() ! LastUploadTime(dao.getLastUploadTime(appName))
+      sender ! LastUploadTime(dao.getLastUploadTime(appName))
   }
 }

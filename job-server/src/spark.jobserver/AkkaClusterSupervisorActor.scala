@@ -7,7 +7,9 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor._
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.{MemberUp, MemberEvent, InitialStateAsEvents}
+import akka.cluster.Member
+import akka.cluster.MemberStatus
+import akka.cluster.ClusterEvent.{MemberUp, MemberEvent, CurrentClusterState}
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory, ConfigRenderOptions}
 import ooyala.common.akka.InstrumentedActor
@@ -41,8 +43,7 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
 
   val config = context.system.settings.config
   val defaultContextConfig = config.getConfig("spark.context-settings")
-  val contextInitTimeout = config.getDuration("spark.context-settings.context-init-timeout",
-                                                TimeUnit.SECONDS)
+  val contextInitTimeout = config.getMilliseconds("spark.context-settings.context-init-timeout") / 1000
   val managerStartCommand = config.getString("deploy.manager-start-cmd")
   import context.dispatcher
 
@@ -66,7 +67,7 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
 
   override def preStart(): Unit = {
     cluster.join(selfAddress)
-    cluster.subscribe(self, initialStateMode = InitialStateAsEvents, classOf[MemberEvent])
+    cluster.subscribe(self, classOf[MemberEvent])
   }
 
   override def postStop(): Unit = {
@@ -75,11 +76,11 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
   }
 
   def wrappedReceive: Receive = {
+    case state: CurrentClusterState =>
+      state.members.filter(_.status == MemberStatus.Up) foreach register
+
     case MemberUp(member) =>
-      if (member.hasRole("manager")) {
-        val memberActors = RootActorPath(member.address) / "user" / "*"
-        context.actorSelection(memberActors) ! Identify(memberActors)
-      }
+      register(member)
 
     case ActorIdentity(memberActors, actorRefOpt) =>
       actorRefOpt.map { actorRef =>
@@ -105,7 +106,7 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
       sender ! contexts.keys.toSeq
 
     case AddContext(name, contextConfig) =>
-      val originator = sender()
+      val originator = sender
       val mergedConfig = contextConfig.withFallback(defaultContextConfig)
       // TODO(velvia): This check is not atomic because contexts is only populated
       // after SparkContext successfully created!  See
@@ -121,7 +122,7 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
       }
 
     case StartAdHocContext(classPath, contextConfig) =>
-      val originator = sender()
+      val originator = sender
       val mergedConfig = contextConfig.withFallback(defaultContextConfig)
 
       var contextName = ""
@@ -162,6 +163,13 @@ class AkkaClusterSupervisorActor(daoActor: ActorRef) extends InstrumentedActor {
       val name: String = actorRef.path.name
       logger.info("Actor terminated: {}", name)
       contexts.retain { case (name, (jobMgr, resActor)) => jobMgr != actorRef }
+  }
+
+  private def register(member: Member): Unit = {
+    if (member.hasRole("manager")) {
+      val memberActors = RootActorPath(member.address) / "user" / "*"
+      context.actorSelection(memberActors) ! Identify(memberActors)
+    }
   }
 
   private def initContext(actorName: String, ref: ActorRef, timeoutSecs: Long = 1)
