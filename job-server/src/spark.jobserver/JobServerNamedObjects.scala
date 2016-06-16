@@ -27,8 +27,8 @@ class JobServerNamedObjects(system: ActorSystem) extends NamedObjects {
   // Default timeout is 60 seconds. Hopefully that is enough
   // to let most RDD/DataFrame generator functions finish.
   val defaultTimeout = Timeout(
-    config.getDuration("spark.jobserver.named-object-creation-timeout",
-      SECONDS), SECONDS)
+    Duration(config.getMilliseconds("spark.jobserver.named-object-creation-timeout"),
+      MILLISECONDS))
 
   // we must store a reference to each NamedObject even though only its ID is used here
   // this reference prevents the object from being GCed and cleaned by sparks ContextCleaner

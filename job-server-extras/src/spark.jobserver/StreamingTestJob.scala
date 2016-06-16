@@ -13,6 +13,7 @@ object StreamingTestJob extends SparkStreamingJob {
 
 
   def runJob(ssc: StreamingContext, config: Config): Any = {
+    import org.apache.spark.streaming.StreamingContext._
     val queue = mutable.Queue[RDD[String]]()
     queue += ssc.sparkContext.makeRDD(Seq("123", "test", "test2"))
     val lines = ssc.queueStream(queue)
