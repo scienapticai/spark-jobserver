@@ -2,7 +2,6 @@ package ooyala.common.akka.web
 
 import org.joda.time.DateTime
 import org.scalatest.{Matchers, FunSpec}
-import spray.json.JsonParser.ParsingException
 
 class JsonUtilsSpec extends FunSpec with Matchers {
   import spray.json._
@@ -70,10 +69,10 @@ class JsonUtilsSpec extends FunSpec with Matchers {
     it("should throw exception for invalid JSON") {
       val badJson1 = """{123: 456}"""    // objects must have string keys
       val badJson2 = """["abc]"""         // unbalanced quotes
-      intercept[ParsingException](JsonUtils.listFromJson(badJson1))
-      intercept[ParsingException](JsonUtils.listFromJson(badJson2))
-      intercept[ParsingException](JsonUtils.mapFromJson(badJson1))
-      intercept[ParsingException](JsonUtils.mapFromJson(badJson2))
+      intercept[java.lang.Exception](JsonUtils.listFromJson(badJson1))
+      intercept[java.lang.Exception](JsonUtils.listFromJson(badJson2))
+      intercept[java.lang.Exception](JsonUtils.mapFromJson(badJson1))
+      intercept[java.lang.Exception](JsonUtils.mapFromJson(badJson2))
     }
 
     it("should throw exception for valid JSON that doesn't conform to expected type") {
