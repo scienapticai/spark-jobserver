@@ -5,7 +5,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{ SQLContext, Row, DataFrame }
+import org.apache.spark.sql.{ SQLContext, Row}
 
 /**
  * A test job that accepts a SQLContext, as opposed to the regular SparkContext.
@@ -14,7 +14,6 @@ import org.apache.spark.sql.{ SQLContext, Row, DataFrame }
 class NamedObjectsTestJob extends SparkJob with NamedObjectSupport {
   import NamedObjectsTestJobConfig._
   implicit def rddPersister: NamedObjectPersister[NamedRDD[Row]] = new RDDPersister[Row]
-  implicit def dataFramePersister: NamedObjectPersister[NamedDataFrame] = new DataFramePersister
   implicit def broadcastPersister[U]: NamedObjectPersister[NamedBroadcast[U]] = new BroadcastPersister[U]
 
   def validate(sql: SparkContext, config: Config): SparkJobValidation = SparkJobValid
@@ -24,14 +23,6 @@ class NamedObjectsTestJob extends SparkJob with NamedObjectSupport {
   }
 
   def runJob(sc: SparkContext, config: Config): Array[String] = {
-    if (config.hasPath(CREATE_DF) && config.getBoolean(CREATE_DF)) {
-      val sqlContext = new SQLContext(sc)
-      val struct = StructType(
-        StructField("i", IntegerType, true) ::
-          StructField("b", BooleanType, false) :: Nil)
-      val df = sqlContext.createDataFrame(rows(sc), struct)
-      namedObjects.update("df1", NamedDataFrame(df, true, StorageLevel.MEMORY_AND_DISK))
-    }
     if (config.hasPath(CREATE_RDD) && config.getBoolean(CREATE_RDD)) {
       namedObjects.update("rdd1", NamedRDD(rows(sc), true, StorageLevel.MEMORY_ONLY))
     }
@@ -53,9 +44,7 @@ class NamedObjectsTestJob extends SparkJob with NamedObjectSupport {
 }
 
 object NamedObjectsTestJobConfig {
-  val CREATE_DF = "createDF"
   val CREATE_RDD = "createRDD"
   val CREATE_BROADCAST = "createBroadcast"
   val DELETE = "delete"
 }
-

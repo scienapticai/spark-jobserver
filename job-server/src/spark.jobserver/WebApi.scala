@@ -120,7 +120,7 @@ class WebApi(system: ActorSystem,
   override def actorRefFactory: ActorSystem = system
   implicit val ec: ExecutionContext = system.dispatcher
   implicit val ShortTimeout =
-    Timeout(config.getDuration("spark.jobserver.short-timeout", TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
+    Timeout(Duration(config.getMilliseconds("spark.jobserver.short-timeout"), TimeUnit.MILLISECONDS))
   val DefaultSyncTimeout = Timeout(10 seconds)
   val DefaultJobLimit = 50
   val StatusKey = "status"
@@ -143,8 +143,7 @@ class WebApi(system: ActorSystem,
       import java.util.concurrent.TimeUnit
       logger.info("Using authentication.")
       initSecurityManager()
-      val authTimeout = Try(config.getDuration("shiro.authentication-timeout",
-              TimeUnit.MILLISECONDS).toInt / 1000).getOrElse(10)
+      val authTimeout = Try(config.getInt("shiro.authentication-timeout")).getOrElse(10)
       asShiroAuthenticator(authTimeout)
     } else {
       logger.info("No authentication.")
@@ -309,8 +308,8 @@ class WebApi(system: ActorSystem,
 
                   logger.warn("refreshing contexts")
                   val future = (supervisor ? ListContexts).mapTo[Seq[String]]
-                  val lookupTimeout = Try(config.getDuration("spark.jobserver.context-lookup-timeout",
-                    TimeUnit.MILLISECONDS).toInt / 1000).getOrElse(1)
+                  val lookupTimeout = Try(config.getMilliseconds("spark.jobserver.context-lookup-timeout")
+                    .toInt / 1000).getOrElse(1)
                   val contexts = Await.result(future, lookupTimeout.seconds).asInstanceOf[Seq[String]]
 
                   val stopFutures = contexts.map(c => supervisor ? StopContext(c))
