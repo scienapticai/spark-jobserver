@@ -2,7 +2,7 @@ package spark.jobserver
 
 import com.typesafe.config.ConfigFactory
 import spray.http.StatusCodes._
-
+import spark.jobserver.util.SparkJobUtils
 
 // Tests web response codes and formatting
 // Does NOT test underlying Supervisor / JarManager functionality
@@ -313,6 +313,13 @@ class WebApiMainRoutesSpec extends WebApiSpec {
     it("should respond with 404 Not Found if stopping unknown context") {
       Delete("/contexts/none", "") ~> sealRoute(routes) ~> check {
         status should be (NotFound)
+      }
+    }
+
+	it("should allow anonymous user to delete context with any impersonation when security is off") {
+      Delete("/contexts/xxx?" + SparkJobUtils.SPARK_PROXY_USER_PARAM + "=YYY") ~>
+      sealRoute(routes) ~> check {
+        status should be(OK)
       }
     }
 
