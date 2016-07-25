@@ -39,7 +39,7 @@ JAVA_OPTS="-XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -XX:+HeapDumpOnOutOfMemory
 MAIN="spark.jobserver.JobServer"
 
 PIDFILE=$appdir/spark-jobserver.pid
-if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE"); then
+if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") >/dev/null 2>&1 ; then
    echo 'Job server is already running'
    exit 1
 fi
@@ -47,6 +47,11 @@ fi
 buildVersionFile="$appdir/build.version"
 if [ -f "$buildVersionFile" ] ; then
   echo "BUILD-VERSION: $(cat $buildVersionFile)" >>"$LOG_DIR/spark-job-server.log"
+fi
+
+# Start Kerberos ticket renewer if necessary
+if [ -n "$JOBSERVER_KEYTAB" ] ; then
+  "$appdir"/kerberos-ticket-renewer.sh 2>&1 >>"$LOG_DIR"/kerberos-ticket-renewer.log </dev/null &
 fi
 
 cmd='$SPARK_HOME/bin/spark-submit --class $MAIN --driver-memory $JOBSERVER_MEMORY
