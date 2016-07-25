@@ -19,13 +19,18 @@ fi
 
 pidFilePath=$appdir/$PIDFILE
 
-if [ ! -f "$pidFilePath" ] || ! kill -0 "$(cat "$pidFilePath")"; then
+if [ ! -f "$pidFilePath" ] || ! kill -0 "$(cat "$pidFilePath")" >/dev/null 2>&1 ; then
    echo 'Job server not running'
 else
-  echo 'Stopping job server...'
   PID="$(cat "$pidFilePath")"
-  "$(dirname "$0")"/kill-process-tree.sh 15 $PID && rm "$pidFilePath"
-  echo '...job server stopped'
+  PGID="$(ps -o pgid= -p $PID | grep -o '[0-9]*' )"
+
+  if [ -n "$PGID" ] ; then
+    echo "Stopping Spark job server via SIGTERM to process group $PGID"
+    kill -s TERM -- -$PGID && rm "$pidFilePath"
+  else
+    echo "Could not determine process group of Spark jobserver process $PID. Is it still running."
+  fi
 fi
 
 
