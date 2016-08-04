@@ -56,6 +56,7 @@ fi
 
 cmd='$SPARK_HOME/bin/spark-submit --class $MAIN --driver-memory $JOBSERVER_MEMORY
  --conf "spark.executor.extraJavaOptions=$LOGGING_OPTS"
+ $SPARK_SUBMIT_OPTIONS
  --driver-class-path "$SPARK_HOME/../hive/lib/*"
  --driver-java-options "$GC_OPTS $JAVA_OPTS $LOGGING_OPTS $CONFIG_OVERRIDES -Dspark.executor.extraClassPath=$SPARK_HOME/../hive/lib/*"
  $@ $appdir/spark-job-server.jar $conffile'
