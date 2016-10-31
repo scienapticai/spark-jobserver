@@ -51,6 +51,8 @@ class LdapGroupRealm extends JndiLdapRealm {
       None
   }
 
+  private var userGroupAttribute : String = "member"
+
   private def getEnvironmentParam(jni: JndiLdapContextFactory, param: String): String = {
     val value = jni.getEnvironment().get(param)
     value match {
@@ -75,6 +77,12 @@ class LdapGroupRealm extends JndiLdapRealm {
     }
   }
 
+  def setUserGroupAttribute(aUserGroupAttribute : String) {
+    userGroupAttribute = aUserGroupAttribute
+  }
+
+  private def groupMemberFilter = "(" + userGroupAttribute + "=*)"
+
   def queryForAuthorizationInfo(ldapContext: LdapContext, username: String): AuthorizationInfo = {
     val roleNames = getRoleNamesForUser(ldapContext, username)
     if (isInAllowedGroupOrNoCheckOnGroups(roleNames)) {
@@ -90,7 +98,7 @@ class LdapGroupRealm extends JndiLdapRealm {
 
     val groupSearchAtts: Array[Object] = Array()
 
-    val groupAnswer = ldapContext.search(searchBase, LdapGroupRealm.groupMemberFilter,
+    val groupAnswer = ldapContext.search(searchBase, groupMemberFilter,
       groupSearchAtts, searchCtls).asScala
 
     groupAnswer.map { sr2 =>
@@ -103,7 +111,7 @@ class LdapGroupRealm extends JndiLdapRealm {
     val attrs: Attributes = sr.getAttributes()
 
     if (attrs != null) {
-      LdapUtils.getAllAttributeValues(attrs.get("member")).asScala.toSet
+      LdapUtils.getAllAttributeValues(attrs.get(userGroupAttribute)).asScala.toSet
     } else {
       Set()
     }
@@ -136,7 +144,6 @@ class LdapGroupRealm extends JndiLdapRealm {
 }
 
 object LdapGroupRealm {
-  val groupMemberFilter = "(member=*)"
   val personSearchFilter = "(&(objectClass=person)(CN={0}))"
   val ERROR_MSG_NO_VALID_GROUP = "no valid group found"
 }
