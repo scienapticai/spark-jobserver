@@ -13,6 +13,10 @@ import javax.naming.ldap.LdapContext
 import javax.naming._
 import javax.naming.directory._
 
+object LdapGroupRealmSpec {
+   val memberAttributeName = "memberUid"
+}
+  
 class LdapGroupRealmSpec extends FunSpecLike with Matchers {
   import collection.JavaConverters._
 
@@ -21,6 +25,7 @@ class LdapGroupRealmSpec extends FunSpecLike with Matchers {
 # activeDirectoryRealm = org.apache.shiro.realm.ldap.JndiLdapRealm
 # use this for checking group membership of users based on the 'member' attribute of the groups:
 activeDirectoryRealm = spark.jobserver.auth.LdapGroupRealm
+activeDirectoryRealm.userGroupAttribute = """ + LdapGroupRealmSpec.memberAttributeName + """
 # search base for ldap groups:
 activeDirectoryRealm.contextFactory.environment[ldap.searchBase] = dc=xxx,dc=org
 activeDirectoryRealm.contextFactory.environment[ldap.allowedGroups] = "cn=group1,ou=groups", "", "cn=group2,ou=groups",,,,,
@@ -175,10 +180,10 @@ class TestLdapContext extends LdapContext {
   def rebind(x$1: Name, x$2: Any, x$3: directory.Attributes): Unit = ???
 
   def search(searchBase: String, searchFilter: String, searchAtts: Array[Object], searchCtls: SearchControls): NamingEnumeration[SearchResult] = {
-    if (searchFilter == LdapGroupRealm.groupMemberFilter) {
-      new TestNamingEnumeration(List(new SearchResult("cn=group1,ou=groups", null, new BasicAttributes("member", "cn=userInGroup1,ou=people,dc=xxx,dc=org")),
-        new SearchResult("cn=group2,ou=groups", null, new BasicAttributes("member", "cn=userInGroup2,ou=people,dc=xxx,dc=org")),
-        new SearchResult("cn=groupXX,ou=groups", null, new BasicAttributes("member", "cn=userInGroupXX,ou=people,dc=xxx,dc=org"))))
+    if (searchFilter.contains(LdapGroupRealmSpec.memberAttributeName)) {
+      new TestNamingEnumeration(List(new SearchResult("cn=group1,ou=groups", null, new BasicAttributes(LdapGroupRealmSpec.memberAttributeName, "cn=userInGroup1,ou=people,dc=xxx,dc=org")),
+        new SearchResult("cn=group2,ou=groups", null, new BasicAttributes(LdapGroupRealmSpec.memberAttributeName, "cn=userInGroup2,ou=people,dc=xxx,dc=org")),
+        new SearchResult("cn=groupXX,ou=groups", null, new BasicAttributes(LdapGroupRealmSpec.memberAttributeName, "cn=userInGroupXX,ou=people,dc=xxx,dc=org"))))
     } else {
       new TestNamingEnumeration(List(new SearchResult("cn=%s,ou=people" format searchAtts(0), null, new BasicAttributes("k", "v"))))
     }
