@@ -57,7 +57,7 @@ fi
 cmd='$SPARK_HOME/bin/spark-submit --class $MAIN --driver-memory $JOBSERVER_MEMORY
   --conf "spark.executor.extraJavaOptions=$LOGGING_OPTS"
   $SPARK_SUBMIT_OPTIONS
-  --driver-java-options "$GC_OPTS $JAVA_OPTS $LOGGING_OPTS $CONFIG_OVERRIDES"
+  --driver-java-options "$GC_OPTS $JAVA_OPTS $LOGGING_OPTS $CONFIG_OVERRIDES $SPARK_SUBMIT_JAVA_OPTIONS"
   $@ $appdir/spark-job-server.jar $conffile'
 if [ -z "$JOBSERVER_FG" ]; then
   eval $cmd >$LOG_DIR/spark-job-server.out 2>&1 < /dev/null &
