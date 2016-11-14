@@ -317,7 +317,6 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
       }
     }(executionContext).andThen {
       case Success(result: Any) =>
-        statusActor ! JobFinished(jobId, DateTime.now())
         // TODO: If the result is Stream[_] and this is running with context-per-jvm=true configuration
         // serializing a Stream[_] blob across process boundaries is not desirable.
         // In that scenario an enhancement is required here to chunk stream results back.
@@ -328,6 +327,7 @@ class JobManagerActor(contextConfig: Config) extends InstrumentedActor {
         // Either way an enhancement would be required here to make Stream[_] responses work
         // with context-per-jvm=true configuration
         resultActor ! JobResult(jobId, result)
+        statusActor ! JobFinished(jobId, DateTime.now())
       case Failure(error: Throwable) =>
         // Wrapping the error inside a RuntimeException to handle the case of throwing custom exceptions.
         val wrappedError = wrapInRuntimeException(error)
