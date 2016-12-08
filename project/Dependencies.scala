@@ -84,6 +84,7 @@ object Dependencies {
     "sonatype snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
     // Required for Cloudera dependencies
     "cdh repo" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
-    "spray repo" at "http://repo.spray.io"
+    "spray repo" at "http://repo.spray.io",
+    "spring repo" at "http://repo.spring.io/libs-release"
   )
 }
