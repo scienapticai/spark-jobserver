@@ -30,7 +30,7 @@ class NamedObjectsJobSpec extends JobSpecBase(JobManagerSpec.getNewSystem) {
 
   private def getCreateConfig(createDF: Boolean, createRDD: Boolean, createBroadcast: Boolean = false) : Config = {
     ConfigFactory.parseString("spark.jobserver.named-object-creation-timeout = 60 s, " +
-        NamedObjectsTestJobConfig.CREATE_DF + " = " + createDF + ", " +
+//        NamedObjectsTestJobConfig.CREATE_DF + " = " + createDF + ", " +
         NamedObjectsTestJobConfig.CREATE_RDD + " = " + createRDD + ", " +
         NamedObjectsTestJobConfig.CREATE_BROADCAST + " = " + createBroadcast)
   }
