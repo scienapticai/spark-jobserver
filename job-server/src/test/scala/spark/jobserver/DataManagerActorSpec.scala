@@ -3,6 +3,7 @@ package spark.jobserver
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSpecLike, Matchers}
+import java.io.File
 import java.nio.file.Files
 
 import spark.jobserver.common.akka
@@ -37,16 +38,16 @@ class DataManagerActorSpec extends TestKit(DataManagerActorSpec.system) with Imp
 
   describe("DataManagerActor") {
     it("should store, list and delete tmp data file") {
-      val fileName = System.currentTimeMillis + "tmpFile"
+      val fileNamePrefix = System.currentTimeMillis + "tmpFile"
 
-      actor ! StoreData(fileName, bytes)
-      val fn = expectMsgPF() {
+      actor ! StoreData(fileNamePrefix, bytes)
+      val fileName = expectMsgPF() {
         case Stored(msg) => msg
       }
+      fileName should startWith (fileNamePrefix)
 
-      fn.contains(fileName) should be(true)
       dao.listFiles.exists(f => f.contains(fileName)) should be(true)
-      actor ! DeleteData(fn)
+      actor ! DeleteData(fileName)
       expectMsg(Deleted)
       dao.listFiles.exists(f => f.contains(fileName)) should be(false)
     }
@@ -59,6 +60,7 @@ class DataManagerActorSpec extends TestKit(DataManagerActorSpec.system) with Imp
       }
 
       storedFiles should equal(dao.listFiles)
+      dao.listFiles should equal(Set())
     }
 
     it("should store, list and delete several files") {
@@ -68,14 +70,39 @@ class DataManagerActorSpec extends TestKit(DataManagerActorSpec.system) with Imp
           case Stored(msg) => msg
         }
       }).toSet
-
       dao.listFiles should equal(storedFiles)
+      dao.listFiles should not equal(Set())
+
+      actor ! ListData
+      val actorList = expectMsgPF() {
+        case files => files
+      }
+      actorList should equal(storedFiles)
+
       storedFiles foreach (fn => {
-        actor ! DeleteData(fn)
+        actor ! DeleteData(new File(fn).getName)
         expectMsg(Deleted)
       })
       dao.listFiles should equal(Set())
     }
 
+    it("should return an error on unknown files") {
+      actor ! DeleteData("unknown-file")
+      expectMsg(Error)
+    }
+
+    it("should return an error if file was already removed") {
+      val fileNamePrefix = System.currentTimeMillis + "tmpFile"
+      actor ! StoreData(fileNamePrefix, bytes)
+      val fileName = expectMsgPF() {
+        case Stored(msg) => msg
+      }
+
+      actor ! DeleteData(fileName)
+      expectMsg(Deleted)
+
+      actor ! DeleteData(fileName)
+      expectMsg(Error)
+    }
   }
 }

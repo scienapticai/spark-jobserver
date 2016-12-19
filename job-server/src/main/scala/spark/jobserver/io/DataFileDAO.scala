@@ -72,7 +72,6 @@ class DataFileDAO(config: Config) {
   def saveFile(aNamePrefix: String, uploadTime: DateTime, aBytes: Array[Byte]): String = {
     // The order is important. Save the file first and then log it into meta data file.
     val outFile = new File(rootDir, createFileName(aNamePrefix, uploadTime) + DataFileDAO.EXTENSION)
-    val name = outFile.getAbsolutePath
     val bos = new BufferedOutputStream(new FileOutputStream(outFile))
     try {
       logger.debug("Writing {} bytes to file {}", aBytes.length, outFile.getPath)
@@ -83,11 +82,13 @@ class DataFileDAO(config: Config) {
     }
 
     // log it into meta data file
-    writeFileInfo(dataOutputStream, DataFileInfo(name, uploadTime))
+    writeFileInfo(dataOutputStream, DataFileInfo(outFile.getAbsolutePath, uploadTime))
 
     // track the new file in memory
-    addFile(name)
-    name
+    addFile(outFile.getAbsolutePath)
+
+    // return only file name
+    outFile.getName
   }
 
   private def writeFileInfo(out: DataOutputStream, aInfo: DataFileInfo) {
@@ -96,11 +97,14 @@ class DataFileDAO(config: Config) {
   }
 
   def deleteFile(aName: String): Boolean = {
-    if (aName.startsWith(rootDir) && files.contains(aName)) {
+    val file = new File(rootDir, aName)
+    val absPath = file.getAbsolutePath
+
+    if (files.contains(absPath)) {
       // only delete the file if it is known to this class,
       // otherwise this could be abused
-      val deleteResult = new File(aName).delete
-      if (deleteResult) files -= aName
+      val deleteResult = file.delete
+      if (deleteResult) files -= absPath
       return deleteResult
     }
     false
@@ -112,7 +116,7 @@ class DataFileDAO(config: Config) {
     files += aName
   }
 
-  def listFiles: Set[String] = files.toSet
+  def listFiles: Set[String] = files.map(new File(_).getName).toSet
 
   private def createFileName(aName: String, uploadTime: DateTime): String =
     aName + "-" + uploadTime.toString().replace(':', '_')
